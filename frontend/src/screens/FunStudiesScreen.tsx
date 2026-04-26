@@ -18,11 +18,9 @@ export function FunStudiesScreen({ onNext, onBack }: FunStudiesScreenProps) {
   const [selected, setSelected] = useState<string | null>(null)
   return (
     <div className="screen fun-screen">
-      <div className="screen-header">
-        <Button variant="secondary" onClick={onBack} aria-label="Go back">
-          Back
-        </Button>
-      </div>
+      <button className="passion-back-link" type="button" onClick={onBack} aria-label="Back">
+        &lt;&lt;Back
+      </button>
       <div className="screen-content">
         <Title className="fun-title">How will you judge fun and studies on your journey?</Title>
         <div className="fun-grid">

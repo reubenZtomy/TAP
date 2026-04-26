@@ -14,37 +14,61 @@ const options = [
   { key: 'over_45k', label: 'Endless Gold - Over AUD 45k' },
 ]
 
+type BagType = 'bag' | 'bag2'
+type BagSlots = {
+  topLeft: BagType | null
+  top: BagType | null
+  topRight: BagType | null
+  bottom: BagType | null
+}
+
 export function TreasureScreen({ onBack, onConfirm }: TreasureScreenProps) {
   const [selected, setSelected] = useState<string | null>(null)
-  const bagSrc = useMemo(() => {
-    // Use bag-only variants from Quiz-4 (Treasure Bag-*.png)
+
+  const bagSlots = useMemo<BagSlots | null>(() => {
     switch (selected) {
       case 'under_25k':
-        return '/asq/treasure4/Treasure Bag-1.png'
+        return { bottom: 'bag', topLeft: 'bag2', top: 'bag2', topRight: 'bag2' }
       case '25_35k':
-        return '/asq/treasure4/Treasure Bag-2.png'
+        return { bottom: 'bag', topLeft: 'bag2', top: 'bag2', topRight: 'bag' }
       case '35_45k':
-        return '/asq/treasure4/Treasure Bag-3.png'
+        return { bottom: 'bag', topLeft: 'bag', top: 'bag2', topRight: 'bag' }
       case 'over_45k':
-        return '/asq/treasure4/Treasure Bag-4.png'
+        return { bottom: 'bag', topLeft: 'bag', top: 'bag', topRight: 'bag' }
       default:
-        return '/asq/treasure4/Treasure Bag.png'
+        return null
     }
   }, [selected])
 
+  const getBagSrc = (bagType: BagType) =>
+    bagType === 'bag' ? '/asq/treasure4/Treasure Bag.png' : '/asq/treasure4/Treasure Bag-2.png'
+
   return (
     <div className="screen treasure-screen">
-      <div className="screen-header">
-        <Button variant="secondary" onClick={onBack} aria-label="Go back">
-          Back
-        </Button>
-      </div>
+      <button className="passion-back-link" type="button" onClick={onBack} aria-label="Back">
+        &lt;&lt;Back
+      </button>
       <div className="screen-content">
         <Title className="treasure-title">What’s your treasure chest looking for this Aussie quest?</Title>
-        <div className="treasure-hero treasure-hero--small" aria-hidden="true">
-          {bagSrc ? (
-            <img key={bagSrc} src={bagSrc} alt="" className="treasure-hero-variant" draggable={false} />
-          ) : null}
+        <div className="treasure-hero treasure-hero--small" aria-hidden="true" key={selected ?? 'default'}>
+          {!bagSlots ? (
+            <img src="/asq/treasure4/Group 52.png" alt="" className="treasure-hero-default" draggable={false} />
+          ) : (
+            <div className="treasure-bag-scene">
+              {bagSlots.topLeft ? (
+                <img src={getBagSrc(bagSlots.topLeft)} alt="" className="treasure-slot treasure-slot-top-left" draggable={false} />
+              ) : null}
+              {bagSlots.top ? (
+                <img src={getBagSrc(bagSlots.top)} alt="" className="treasure-slot treasure-slot-top" draggable={false} />
+              ) : null}
+              {bagSlots.topRight ? (
+                <img src={getBagSrc(bagSlots.topRight)} alt="" className="treasure-slot treasure-slot-top-right" draggable={false} />
+              ) : null}
+              {bagSlots.bottom ? (
+                <img src={getBagSrc(bagSlots.bottom)} alt="" className="treasure-slot treasure-slot-bottom" draggable={false} />
+              ) : null}
+            </div>
+          )}
         </div>
         <div className="treasure-options">
           {options.map((opt) => (

@@ -19,11 +19,9 @@ export function PartnerScreen({ onBack, onFinish }: PartnerScreenProps) {
   const current = useMemo(() => partners.find((p) => p.key === selected) || null, [selected])
   return (
     <div className="screen partner-screen">
-      <div className="screen-header">
-        <Button variant="secondary" onClick={onBack} aria-label="Go back">
-          Back
-        </Button>
-      </div>
+      <button className="passion-back-link" type="button" onClick={onBack} aria-label="Back">
+        &lt;&lt;Back
+      </button>
       <div className="screen-content">
         <p className="partner-heading">Who’s your wild partner on this epic journey through Australia?</p>
         <div className="partner-choices">

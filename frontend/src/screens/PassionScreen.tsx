@@ -1,6 +1,5 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '../components/Button'
-import { Title } from '../components/Typography'
 
 type PassionItem = {
   key: string
@@ -31,127 +30,154 @@ const defaultPassions: PassionItem[] = [
 ]
 
 export function PassionScreen({ onBack, onNext }: PassionScreenProps) {
-  const [cards, setCards] = useState<PassionItem[]>(defaultPassions)
-  const [selected, setSelected] = useState<string | null>(null)
-  const dragRef = useRef<{ startX: number; startY: number } | null>(null)
-  const [drag, setDrag] = useState<{ x: number; y: number; rotating: number }>({
-    x: 0,
-    y: 0,
-    rotating: 0,
-  })
+  const [selected, setSelected] = useState<string | null>(defaultPassions[0]?.key ?? null)
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const carouselRef = useRef<HTMLDivElement | null>(null)
+  const rafRef = useRef<number | null>(null)
+  const dragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number } | null>(null)
 
-  const topCard = cards[0]
-  const restCount = cards.length - 1
-
-  const threshold = 80
-  const rotation = useMemo(() => Math.max(-15, Math.min(15, drag.x / 6)), [drag.x])
-
-  const onPointerDown = useCallback((e: React.PointerEvent) => {
-    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
-    dragRef.current = { startX: e.clientX, startY: e.clientY }
+  const syncCurrentCard = useCallback(() => {
+    const root = carouselRef.current
+    if (!root) return
+    const cards = Array.from(root.querySelectorAll<HTMLElement>('.stack-card'))
+    if (!cards.length) return
+    const viewportCenter = root.scrollLeft + root.clientWidth / 2
+    let nearestIdx = 0
+    let nearestDistance = Number.POSITIVE_INFINITY
+    cards.forEach((card, idx) => {
+      const cardCenter = card.offsetLeft + card.offsetWidth / 2
+      const distance = Math.abs(cardCenter - viewportCenter)
+      if (distance < nearestDistance) {
+        nearestDistance = distance
+        nearestIdx = idx
+      }
+    })
+    setCurrentIndex(nearestIdx)
+    setSelected(defaultPassions[nearestIdx]?.key ?? null)
   }, [])
 
-  const onPointerMove = useCallback((e: React.PointerEvent) => {
-    if (!dragRef.current) return
-    const dx = e.clientX - dragRef.current.startX
-    const dy = e.clientY - dragRef.current.startY
-    setDrag({ x: dx, y: dy, rotating: rotation })
-  }, [rotation])
-
-  const finishSwipe = useCallback(
-    (direction: 'left' | 'right') => {
-      if (!topCard) return
-      if (direction === 'right') {
-        // Select current top card, snap back to center (do not remove)
-        setSelected(topCard.key)
-        setDrag({ x: 0, y: 0, rotating: 0 })
-      } else {
-        // Skip: remove top card and reset selection if it pointed to this key
-        const removedKey = topCard.key
-        const offX = -window.innerWidth
-        setDrag({ x: offX, y: drag.y, rotating: -20 })
-        setTimeout(() => {
-          setCards((prev) => prev.slice(1))
-          setDrag({ x: 0, y: 0, rotating: 0 })
-          setSelected((prevSel) => (prevSel === removedKey ? null : prevSel))
-        }, 160)
+  const scrollToNearestCard = useCallback((behavior: ScrollBehavior = 'smooth') => {
+    const root = carouselRef.current
+    if (!root) return
+    const cards = Array.from(root.querySelectorAll<HTMLElement>('.stack-card'))
+    if (!cards.length) return
+    const viewportCenter = root.scrollLeft + root.clientWidth / 2
+    let nearestCard: HTMLElement | undefined
+    let nearestDistance = Number.POSITIVE_INFINITY
+    cards.forEach((card) => {
+      const cardCenter = card.offsetLeft + card.offsetWidth / 2
+      const distance = Math.abs(cardCenter - viewportCenter)
+      if (distance < nearestDistance) {
+        nearestDistance = distance
+        nearestCard = card
       }
-    },
-    [topCard, drag.y]
-  )
+    })
+    if (nearestCard === undefined) return
+    const targetLeft = nearestCard.offsetLeft - (root.clientWidth - nearestCard.offsetWidth) / 2
+    root.scrollTo({ left: Math.max(0, targetLeft), behavior })
+  }, [])
 
-  const onPointerUp = useCallback(() => {
-    if (Math.abs(drag.x) > threshold) {
-      finishSwipe(drag.x > 0 ? 'right' : 'left')
-    } else {
-      setDrag({ x: 0, y: 0, rotating: 0 })
+  const onCarouselScroll = useCallback(() => {
+    if (rafRef.current !== null) window.cancelAnimationFrame(rafRef.current)
+    rafRef.current = window.requestAnimationFrame(syncCurrentCard)
+  }, [syncCurrentCard])
+
+  const onCarouselPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const root = carouselRef.current
+    if (!root) return
+    dragRef.current = {
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startScrollLeft: root.scrollLeft,
     }
+    root.setPointerCapture(e.pointerId)
+    root.classList.add('is-dragging')
+  }, [])
+
+  const onCarouselPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const root = carouselRef.current
+    const drag = dragRef.current
+    if (!root || !drag || drag.pointerId !== e.pointerId) return
+    const dx = e.clientX - drag.startX
+    root.scrollLeft = drag.startScrollLeft - dx
+  }, [])
+
+  const endCarouselDrag = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const root = carouselRef.current
+    const drag = dragRef.current
+    if (!root || !drag || drag.pointerId !== e.pointerId) return
     dragRef.current = null
-  }, [drag.x, finishSwipe])
+    root.classList.remove('is-dragging')
+    if (root.hasPointerCapture(e.pointerId)) root.releasePointerCapture(e.pointerId)
+    scrollToNearestCard('smooth')
+  }, [scrollToNearestCard])
+
+  useEffect(() => {
+    const root = carouselRef.current
+    const firstCard = root?.querySelector<HTMLElement>('.stack-card')
+    if (root && firstCard) {
+      window.requestAnimationFrame(() => {
+        const targetLeft = firstCard.offsetLeft - (root.clientWidth - firstCard.offsetWidth) / 2
+        root.scrollTo({ left: Math.max(0, targetLeft), behavior: 'auto' })
+        syncCurrentCard()
+      })
+    }
+    return () => {
+      if (rafRef.current !== null) window.cancelAnimationFrame(rafRef.current)
+    }
+  }, [syncCurrentCard])
+
+  const swipeInstruction =
+    currentIndex === 0
+      ? 'Swipe to the right for more options'
+      : currentIndex === defaultPassions.length - 1
+        ? 'Swipe to the right'
+        : 'Swipe left or right'
 
   return (
     <div className="screen passion-screen">
-      <div className="screen-header">
-        <Button variant="secondary" onClick={onBack} aria-label="Back">
-          Back
-        </Button>
-        <div className="passion-count" aria-live="polite">
-          {topCard ? `${restCount + 1} cards` : '0 cards'}
-        </div>
-      </div>
+      <button className="passion-back-link" type="button" onClick={onBack} aria-label="Back">
+        &lt;&lt;Back
+      </button>
       <div className="screen-content">
         <div className="passion-heading">Choose your path to your Aussie knowledge mastery!</div>
-        <div className="stack">
-          {cards
-            .slice(0, 4)
-            .map((item, idx) => {
-              const isTop = idx === 0
-              const style: React.CSSProperties = isTop
-                ? {
-                    transform: `translate(${drag.x}px, ${drag.y}px) rotate(${rotation}deg)`,
-                    transition: dragRef.current ? 'none' : 'transform 150ms ease',
-                  }
-                : {
-                    transform: `translateY(${idx * 8}px) scale(${1 - idx * 0.03})`,
-                  }
-              const isFull = !!item.isFullCard
-              return (
-                <div
-                  key={item.key}
-                  className={[
-                    'stack-card',
-                    isFull ? 'stack-card--image' : 'stack-card--framed',
-                    isTop ? 'is-top' : '',
-                    selected === item.key ? 'is-selected' : '',
-                  ].join(' ')}
-                  style={style}
-                  onPointerDown={isTop ? onPointerDown : undefined}
-                  onPointerMove={isTop ? onPointerMove : undefined}
-                  onPointerUp={isTop ? onPointerUp : undefined}
-                >
-                  {isFull ? (
-                    <img src={item.img} alt="" className="stack-card-full" draggable={false} />
-                  ) : (
-                    <div className="stack-card-frame">
-                      <div className="stack-card-corner tl" />
-                      <div className="stack-card-corner br" />
-                      {/* Decorative numerals could be injected here if using framed mode */}
-                      {item.img ? (
-                        <img src={item.img} alt="" className="stack-card-img" draggable={false} />
-                      ) : null}
-                      <div className="stack-card-label" aria-label={item.label}>
-                        {item.label.split('\n').map((line, i) => (
-                          <span key={i} className="stack-card-label-line">
-                            {line}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+        <div
+          className="stack-carousel"
+          ref={carouselRef}
+          onScroll={onCarouselScroll}
+          onPointerDown={onCarouselPointerDown}
+          onPointerMove={onCarouselPointerMove}
+          onPointerUp={endCarouselDrag}
+          onPointerCancel={endCarouselDrag}
+        >
+          <div className="stack-spacer" aria-hidden="true" />
+          {defaultPassions.map((item) => (
+            <div
+              key={item.key}
+              className={['stack-card', item.isFullCard ? 'stack-card--image' : 'stack-card--framed', selected === item.key ? 'is-selected' : ''].join(' ')}
+            >
+              {item.isFullCard ? (
+                <img src={item.img} alt="" className="stack-card-full" draggable={false} />
+              ) : (
+                <div className="stack-card-frame">
+                  <div className="stack-card-corner tl" />
+                  <div className="stack-card-corner br" />
+                  {item.img ? <img src={item.img} alt="" className="stack-card-img" draggable={false} /> : null}
+                  <div className="stack-card-label" aria-label={item.label}>
+                    {item.label.split('\n').map((line, i) => (
+                      <span key={i} className="stack-card-label-line">
+                        {line}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              )
-            })
-            .reverse()}
+              )}
+            </div>
+          ))}
+          <div className="stack-spacer" aria-hidden="true" />
+        </div>
+        <div className="passion-instruction" aria-live="polite">
+          {swipeInstruction}
         </div>
       </div>
       <div className="screen-footer passion-footer">
@@ -171,9 +197,6 @@ export function PassionScreen({ onBack, onNext }: PassionScreenProps) {
         >
           I changed my mind!
         </button>
-        <div className="passion-instruction" aria-hidden="true">
-          Swipe to Select Card then Confirm
-        </div>
       </div>
     </div>
   )
