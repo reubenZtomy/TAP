@@ -8,35 +8,34 @@ type BasecampScreenProps = {
 }
 
 const options = [
-  { key: 'big_creative', label: 'Big and Creative' },
-  { key: 'fast_exciting', label: 'Fast-paced and Exciting' },
-  { key: 'quiet_relaxed', label: 'Quiet and Relaxed' },
-  { key: 'mix_city_nature', label: 'A mix of City and Nature' },
+  { key: 'under_25k', label: 'Small Fortune - Under AUD 25k' },
+  { key: '25_35k', label: 'Well Stocked - AUD 25k - 35k' },
+  { key: '35_45k', label: 'Treasure Trove - AUD 35k - 45k' },
+  { key: 'over_45k', label: 'Endless Gold - Over AUD 45k' },
 ]
 
 export function BasecampScreen({ onBack, onConfirm }: BasecampScreenProps) {
   const [selected, setSelected] = useState<string | null>(null)
   const heroSrc = useMemo(() => {
     switch (selected) {
-      case 'big_creative':
-        return '/asq/quiz6/IMG_1090.png'
-      case 'fast_exciting':
+      case 'under_25k':
+        return '/asq/quiz6/IMG_1096.png'
+      case '25_35k':
         return '/asq/quiz6/IMG_1097.png'
-      case 'quiet_relaxed':
+      case '35_45k':
         return '/asq/quiz6/IMG_1098.png'
-      case 'mix_city_nature':
+      case 'over_45k':
         return '/asq/quiz6/IMG_1099.png'
       default:
-        return '/asq/quiz6/IMG_1099.png'
+        return '/asq/quiz6/IMG_1090.png'
     }
   }, [selected])
+
   return (
     <div className="screen basecamp-screen">
-      <div className="screen-header">
-        <Button variant="secondary" onClick={onBack} aria-label="Go back">
-          Back
-        </Button>
-      </div>
+      <button className="passion-back-link" type="button" onClick={onBack} aria-label="Back">
+        &lt;&lt;Back
+      </button>
       <div className="screen-content">
         <Title className="basecamp-title">Where will you set up your basecamp for learning?</Title>
         <div className="basecamp-hero" aria-hidden="true">

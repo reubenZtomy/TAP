@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '../components/Button'
 import { Title } from '../components/Typography'
 
@@ -17,130 +17,139 @@ const cards: Card[] = [
 ]
 
 export function AdventureScreen({ onBack, onConfirm }: AdventureScreenProps) {
-  const [stack, setStack] = useState<Card[]>(cards)
-  const [selected, setSelected] = useState<string | null>(null)
-  const dragRef = useRef<{ startX: number; startY: number } | null>(null)
-  const [drag, setDrag] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
-  const top = stack[0]
-  const threshold = 60
-  const rotation = useMemo(() => Math.max(-15, Math.min(15, drag.x / 6)), [drag.x])
+  const [selected, setSelected] = useState<string | null>(cards[0]?.key ?? null)
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const carouselRef = useRef<HTMLDivElement | null>(null)
+  const rafRef = useRef<number | null>(null)
+  const dragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number } | null>(null)
 
-  const onPointerDown = useCallback((e: React.PointerEvent) => {
-    e.preventDefault()
-    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
-    dragRef.current = { startX: e.clientX, startY: e.clientY }
+  const syncCurrentCard = useCallback(() => {
+    const root = carouselRef.current
+    if (!root) return
+    const cardEls = Array.from(root.querySelectorAll<HTMLElement>('.adventure-card'))
+    if (!cardEls.length) return
+    const viewportCenter = root.scrollLeft + root.clientWidth / 2
+    let nearestIdx = 0
+    let nearestDistance = Number.POSITIVE_INFINITY
+    cardEls.forEach((card, idx) => {
+      const center = card.offsetLeft + card.offsetWidth / 2
+      const distance = Math.abs(center - viewportCenter)
+      if (distance < nearestDistance) {
+        nearestDistance = distance
+        nearestIdx = idx
+      }
+    })
+    setCurrentIndex(nearestIdx)
+    setSelected(cards[nearestIdx]?.key ?? null)
   }, [])
-  const onPointerMove = useCallback((e: React.PointerEvent) => {
-    if (!dragRef.current) return
-    const dx = e.clientX - dragRef.current.startX
-    const dy = e.clientY - dragRef.current.startY
-    setDrag({ x: dx, y: dy })
+
+  const onCarouselScroll = useCallback(() => {
+    if (rafRef.current !== null) window.cancelAnimationFrame(rafRef.current)
+    rafRef.current = window.requestAnimationFrame(syncCurrentCard)
+  }, [syncCurrentCard])
+
+  const scrollToNearestCard = useCallback((behavior: ScrollBehavior = 'smooth') => {
+    const root = carouselRef.current
+    if (!root) return
+    const cardEls = Array.from(root.querySelectorAll<HTMLElement>('.adventure-card'))
+    if (!cardEls.length) return
+    const viewportCenter = root.scrollLeft + root.clientWidth / 2
+    let nearestCard: HTMLElement | undefined
+    let nearestDistance = Number.POSITIVE_INFINITY
+    cardEls.forEach((card) => {
+      const center = card.offsetLeft + card.offsetWidth / 2
+      const distance = Math.abs(center - viewportCenter)
+      if (distance < nearestDistance) {
+        nearestDistance = distance
+        nearestCard = card
+      }
+    })
+    if (!nearestCard) return
+    const targetLeft = nearestCard.offsetLeft - (root.clientWidth - nearestCard.offsetWidth) / 2
+    root.scrollTo({ left: Math.max(0, targetLeft), behavior })
   }, [])
-  const onPointerUp = useCallback(() => {
-    // Decide action based on horizontal delta
-    if (!top) return
-    if (drag.x > threshold) {
-      // Right swipe: select but KEEP the card (snap back)
-      setSelected(top.key)
-      setDrag({ x: 0, y: 0 })
-    } else if (drag.x < -threshold) {
-      // Left swipe: skip and REMOVE top card with quick off-screen animation
-      setDrag({ x: -window.innerWidth, y: drag.y })
-      setTimeout(() => {
-        setStack((prev) => prev.slice(1))
-        setDrag({ x: 0, y: 0 })
-      }, 160)
-    } else {
-      // Not enough movement → snap back
-      setDrag({ x: 0, y: 0 })
+
+  const onCarouselPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const root = carouselRef.current
+    if (!root) return
+    dragRef.current = { pointerId: e.pointerId, startX: e.clientX, startScrollLeft: root.scrollLeft }
+    root.setPointerCapture(e.pointerId)
+    root.classList.add('is-dragging')
+  }, [])
+
+  const onCarouselPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const root = carouselRef.current
+    const drag = dragRef.current
+    if (!root || !drag || drag.pointerId !== e.pointerId) return
+    const dx = e.clientX - drag.startX
+    root.scrollLeft = drag.startScrollLeft - dx
+  }, [])
+
+  const endCarouselDrag = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const root = carouselRef.current
+    const drag = dragRef.current
+    if (!root || !drag || drag.pointerId !== e.pointerId) return
+    dragRef.current = null
+    root.classList.remove('is-dragging')
+    if (root.hasPointerCapture(e.pointerId)) root.releasePointerCapture(e.pointerId)
+    scrollToNearestCard('smooth')
+  }, [scrollToNearestCard])
+
+  useEffect(() => {
+    const root = carouselRef.current
+    const firstCard = root?.querySelector<HTMLElement>('.adventure-card')
+    if (root && firstCard) {
+      window.requestAnimationFrame(() => {
+        const targetLeft = firstCard.offsetLeft - (root.clientWidth - firstCard.offsetWidth) / 2
+        root.scrollTo({ left: Math.max(0, targetLeft), behavior: 'auto' })
+        syncCurrentCard()
+      })
     }
-    dragRef.current = null
-  }, [drag.x, drag.y, top])
-
-  const onPointerCancel = useCallback(() => {
-    setDrag({ x: 0, y: 0 })
-    dragRef.current = null
-  }, [])
-
-  // Touch fallback (for browsers that don't fully support Pointer Events)
-  const onTouchStart = useCallback((e: React.TouchEvent) => {
-    e.preventDefault()
-    const t = e.touches[0]
-    dragRef.current = { startX: t.clientX, startY: t.clientY }
-  }, [])
-  const onTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!dragRef.current) return
-    const t = e.touches[0]
-    const dx = t.clientX - dragRef.current.startX
-    const dy = t.clientY - dragRef.current.startY
-    setDrag({ x: dx, y: dy })
-  }, [])
-  const onTouchEnd = useCallback(() => {
-    // Reuse pointer-up decision logic
-    if (!top) return
-    if (drag.x > threshold) {
-      setSelected(top.key)
-      setDrag({ x: 0, y: 0 })
-    } else if (drag.x < -threshold) {
-      setDrag({ x: -window.innerWidth, y: drag.y })
-      setTimeout(() => {
-        setStack((prev) => prev.slice(1))
-        setDrag({ x: 0, y: 0 })
-      }, 160)
-    } else {
-      setDrag({ x: 0, y: 0 })
+    return () => {
+      if (rafRef.current !== null) window.cancelAnimationFrame(rafRef.current)
     }
-    dragRef.current = null
-  }, [drag.x, drag.y, top])
+  }, [syncCurrentCard])
+
+  const swipeInstruction =
+    currentIndex === 0
+      ? 'Swipe right for more options or press confirm'
+      : currentIndex === cards.length - 1
+        ? 'Swipe left'
+        : 'Swipe left or right'
 
   return (
     <div className="screen adventure-screen">
-      <div className="screen-header">
-        <Button variant="secondary" onClick={onBack} aria-label="Back">
-          Back
-        </Button>
-      </div>
+      <button className="passion-back-link" type="button" onClick={onBack} aria-label="Back">
+        &lt;&lt;Back
+      </button>
       <div className="screen-content">
         <Title className="adventure-title">How will you level up during your Aussie quest downtime?</Title>
-        <div className="adventure-stack">
-          {stack.slice(0, 3).map((c, idx) => {
-            const isTop = idx === 0
-            const style: React.CSSProperties = isTop
-              ? {
-                  transform: `translate(${drag.x}px, ${drag.y}px) rotate(${rotation}deg)`,
-                  transition: dragRef.current ? 'none' : 'transform 150ms ease',
-                  zIndex: 3,
-                }
-              : {
-                  transform: `translateY(${idx * 10}px) scale(${1 - idx * 0.03})`,
-                  zIndex: 1,
-                }
-            return (
-              <div
-                key={c.key}
-                className={['adventure-card', isTop ? 'is-top' : ''].join(' ')}
-                style={style}
-                onPointerDown={isTop ? onPointerDown : undefined}
-                onPointerMove={isTop ? onPointerMove : undefined}
-                onPointerUp={isTop ? onPointerUp : undefined}
-                onPointerCancel={isTop ? onPointerCancel : undefined}
-                onTouchStart={isTop ? onTouchStart : undefined}
-                onTouchMove={isTop ? onTouchMove : undefined}
-                onTouchEnd={isTop ? onTouchEnd : undefined}
-                onClick={isTop ? () => setSelected(c.key) : undefined}
-              >
-                <img src={c.img} alt={c.label} className="adventure-card-img" draggable={false} />
-              </div>
-            )
-          })}
+        <div
+          className="adventure-carousel"
+          ref={carouselRef}
+          onScroll={onCarouselScroll}
+          onPointerDown={onCarouselPointerDown}
+          onPointerMove={onCarouselPointerMove}
+          onPointerUp={endCarouselDrag}
+          onPointerCancel={endCarouselDrag}
+        >
+          <div className="adventure-spacer" aria-hidden="true" />
+          {cards.map((c, idx) => (
+            <div
+              key={c.key}
+              className={['adventure-card', selected === c.key ? 'is-selected' : '', currentIndex === idx ? 'is-active' : ''].join(' ')}
+            >
+              <img src={c.img} alt={c.label} className="adventure-card-img" draggable={false} />
+            </div>
+          ))}
+          <div className="adventure-spacer" aria-hidden="true" />
         </div>
-        <div className="adventure-caption">{top ? top.label : ''}</div>
       </div>
       <div className="screen-footer adventure-footer">
         <Button onClick={() => onConfirm(selected)} disabled={!selected} fullWidth aria-label="Confirm">
           Confirm
         </Button>
-        <div className="adventure-instruction">Swipe right to select, left to skip</div>
+        <div className="adventure-instruction" aria-live="polite">{swipeInstruction}</div>
       </div>
     </div>
   )
