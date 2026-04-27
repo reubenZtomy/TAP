@@ -42,7 +42,6 @@ export function TreasureScreen({ onBack, onConfirm }: TreasureScreenProps) {
 
   const getBagSrc = (bagType: BagType) =>
     bagType === 'bag' ? '/asq/treasure4/Treasure Bag.png' : '/asq/treasure4/Treasure Bag-2.png'
-
   return (
     <div className="screen treasure-screen">
       <button className="passion-back-link" type="button" onClick={onBack} aria-label="Back">

@@ -7,10 +7,26 @@ import { PassionScreen } from './screens/PassionScreen'
 import { TreasureScreen } from './screens/TreasureScreen'
 import { BasecampScreen } from './screens/BasecampScreen'
 import { AdventureScreen } from './screens/AdventureScreen'
+import { RechargeScreen } from './screens/RechargeScreen'
+import { GraduationScreen } from './screens/GraduationScreen'
+import { ResultsRevealScreen } from './screens/ResultsRevealScreen'
 import { LoginScreen } from './screens/LoginScreen'
 import { RegisterScreen } from './screens/RegisterScreen'
 
-type ScreenId = 'login' | 'register' | 'title' | 'passion' | 'partner' | 'treasure' | 'fun' | 'basecamp' | 'adventure' | 'done'
+type ScreenId =
+  | 'login'
+  | 'register'
+  | 'title'
+  | 'passion'
+  | 'partner'
+  | 'treasure'
+  | 'fun'
+  | 'basecamp'
+  | 'adventure'
+  | 'recharge'
+  | 'graduation'
+  | 'results'
+  | 'done'
 
 export default function App() {
   const [screen, setScreen] = useState<ScreenId>('login')
@@ -106,7 +122,16 @@ export default function App() {
           <BasecampScreen onBack={() => setScreen('fun')} onConfirm={() => setScreen('adventure')} />
         )}
         {screen === 'adventure' && (
-          <AdventureScreen onBack={() => setScreen('basecamp')} onConfirm={() => setScreen('done')} />
+          <AdventureScreen onBack={() => setScreen('basecamp')} onConfirm={() => setScreen('recharge')} />
+        )}
+        {screen === 'recharge' && (
+          <RechargeScreen onBack={() => setScreen('adventure')} onConfirm={() => setScreen('graduation')} />
+        )}
+        {screen === 'graduation' && (
+          <GraduationScreen onBack={() => setScreen('recharge')} onConfirm={() => setScreen('results')} />
+        )}
+        {screen === 'results' && (
+          <ResultsRevealScreen onContinue={() => setScreen('done')} />
         )}
         {screen === 'done' && (
           <div className="screen done-screen">

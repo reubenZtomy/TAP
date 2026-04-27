@@ -172,6 +172,201 @@
 .screen.basecamp-screen .passion-back-link {
   color: #bf4f26;
 }
+.screen.recharge-screen {
+  background: linear-gradient(180deg, #bf4f26 0%, #152840 100%);
+}
+.screen.recharge-screen .passion-back-link {
+  color: #f2d9bb;
+}
+.screen.recharge-screen .basecamp-title {
+  color: #f2d9bb;
+}
+.screen.recharge-screen .screen-content {
+  gap: 12px;
+}
+.screen.recharge-screen .recharge-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 220px;
+  margin: 4px 0;
+}
+.screen.recharge-screen .recharge-hero img {
+  width: 88%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.screen.recharge-screen .basecamp-instruction {
+  color: #f2d9bb;
+}
+.screen.recharge-screen .basecamp-option {
+  background: #152840;
+  opacity: 0.5;
+  color: #ffffff;
+}
+.screen.recharge-screen .basecamp-option:hover {
+  background: #152840;
+  opacity: 0.65;
+}
+.screen.recharge-screen .basecamp-option.is-selected,
+.screen.recharge-screen .basecamp-option[aria-pressed='true'] {
+  background: #152840;
+  opacity: 1;
+}
+.screen.recharge-screen .basecamp-footer .btn {
+  background: #bf4f26;
+  border-color: #bf4f26;
+  color: #ffffff;
+}
+.screen.recharge-screen .basecamp-footer .btn[disabled] {
+  background: #cf7b5e;
+  border-color: #cf7b5e;
+  color: #f2d9bb;
+}
+.screen.graduation-screen {
+  background: linear-gradient(180deg, #152840 0%, #4d688c 100%);
+}
+.screen.graduation-screen .passion-back-link {
+  color: #d5deea;
+}
+.screen.graduation-screen .basecamp-title {
+  color: #e5edf8;
+  margin-top: 42px;
+  margin-bottom: 0;
+}
+.screen.graduation-screen .screen-content {
+  gap: 14px;
+}
+.screen.graduation-screen .graduation-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 12px;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  justify-items: center;
+}
+.screen.graduation-screen .graduation-card {
+  appearance: none;
+  border: 2px solid transparent;
+  border-radius: 14px;
+  background: transparent;
+  padding: 6px 6px 8px;
+  width: 100%;
+  max-width: 178px;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 8px;
+  cursor: pointer;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease, background-color 160ms ease;
+}
+.screen.graduation-screen .graduation-card:hover {
+  transform: translateY(-1px);
+}
+.screen.graduation-screen .graduation-card.is-selected,
+.screen.graduation-screen .graduation-card[aria-pressed='true'] {
+  border-color: #f2d9bb;
+  background: rgba(242, 217, 187, 0.1);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+}
+.screen.graduation-screen .graduation-card-img {
+  width: 100%;
+  height: 196px;
+  border-radius: 10px;
+  object-fit: contain;
+  background: transparent;
+}
+.screen.graduation-screen .graduation-card-label {
+  color: #f2f4f8;
+  font-family: 'Bagel Fat One', 'Dongle', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.1;
+  text-align: center;
+}
+.screen.graduation-screen .graduation-card-line {
+  display: block;
+  font-family: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+.screen.graduation-screen .basecamp-footer .btn {
+  background: #152840;
+  border-color: #152840;
+  color: #ffffff;
+  opacity: 1;
+}
+.screen.graduation-screen .basecamp-footer .btn[disabled] {
+  background: #152840;
+  border-color: #152840;
+  color: #ffffff;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.screen.graduation-screen .basecamp-footer {
+  transform: translateY(-10px);
+}
+.screen.graduation-screen .graduation-instruction {
+  text-align: center;
+  font-size: 18px;
+  color: #ffffff;
+  margin-top: 6px;
+}
+.screen.results-screen {
+  background: linear-gradient(180deg, #4d688c 0%, #f2d9bb 100%);
+  display: flex;
+  flex-direction: column;
+}
+.screen.results-screen .results-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+}
+.screen.results-screen .results-main {
+  font-family: 'Bagel Fat One', 'Dongle', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 1;
+  color: #ffffff;
+}
+.screen.results-screen .results-subwrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.screen.results-screen .results-sub {
+  font-family: 'Dongle', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1;
+  color: #ffffff;
+}
+.screen.results-screen .results-footer {
+  margin-top: auto;
+  display: flex;
+  justify-content: center;
+}
+.screen.results-screen .results-footer .btn {
+  background: #4d688c;
+  border-color: #4d688c;
+  color: #ffffff;
+  width: 256px;
+  max-width: 256px;
+  min-height: 52px;
+  height: 52px;
+  align-self: center;
+  font-family: 'Dongle', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1;
+}
 .basecamp-title {
   font-family: 'Dongle', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   font-weight: 800;
@@ -325,6 +520,40 @@
   height: auto;
   object-fit: contain;
   animation: treasureBagPop 280ms ease-out both;
+  z-index: 2;
+}
+.treasure-coins {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  animation: treasureBagPop 280ms ease-out both;
+  pointer-events: none;
+  z-index: 1;
+}
+.treasure-coins-left {
+  width: 23%;
+  height: 33%;
+  left: 14%;
+  bottom: 7%;
+}
+.treasure-coins-right {
+  width: 26%;
+  height: 36%;
+  right: 12%;
+  bottom: 7%;
+}
+.treasure-coins-short-left {
+  width: 18%;
+  height: 25%;
+  left: 20%;
+  top: 34%;
+}
+.treasure-coins-short-right {
+  width: 18%;
+  height: 25%;
+  right: 20%;
+  top: 34%;
 }
 .treasure-slot-bottom { left: 50%; bottom: 1%; transform: translateX(-50%); animation-delay: 20ms; }
 .treasure-slot-top-right { right: 6%; top: 20%; animation-delay: 90ms; }
