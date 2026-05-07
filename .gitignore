@@ -10,3 +10,6 @@ __pycache__/
 *.pyd
 env/
 ENV/
+
+.env
+backend/.env

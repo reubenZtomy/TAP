@@ -1,18 +1,24 @@
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
+from dotenv import load_dotenv
+from result_engine import ResultEngine
 import sqlite3
 import jwt
 import datetime
 import os
 
-# Static folder points to frontend build directory (../frontend/dist)
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+
 static_dir = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'dist')
 
 app = Flask(__name__, static_folder=static_dir)
 CORS(app)
+
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev_secret_key_change_me')
 db_path = os.path.join(os.path.dirname(__file__), 'auth.db')
+
+result_engine = ResultEngine()
 
 
 def init_db():
@@ -45,8 +51,7 @@ def create_token(user_id, email):
 
 def verify_token(token):
     try:
-        payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-        return payload
+        return jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
     except Exception:
         return None
 
@@ -59,13 +64,17 @@ def hello():
 @app.route('/api/auth/register', methods=['POST'])
 def register():
     data = request.get_json(force=True, silent=True) or {}
+
     email = (data.get('email') or '').strip().lower()
     name = (data.get('name') or '').strip()
     password = data.get('password') or ''
+
     if not email or not name or not password:
         return jsonify({'error': 'Missing required fields'}), 400
+
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
+
     try:
         c.execute(
             'INSERT INTO users (email, name, password_hash, created_at) VALUES (?, ?, ?, ?)',
@@ -75,54 +84,101 @@ def register():
     except sqlite3.IntegrityError:
         conn.close()
         return jsonify({'error': 'Email already registered'}), 409
+
     c.execute('SELECT id FROM users WHERE email = ?', (email,))
     row = c.fetchone()
     conn.close()
+
     user_id = row[0]
     token = create_token(user_id, email)
-    return jsonify({'token': token, 'user': {'id': user_id, 'email': email, 'name': name}}), 201
+
+    return jsonify({
+        'token': token,
+        'user': {
+            'id': user_id,
+            'email': email,
+            'name': name
+        }
+    }), 201
 
 
 @app.route('/api/auth/login', methods=['POST'])
 def login():
     data = request.get_json(force=True, silent=True) or {}
+
     email = (data.get('email') or '').strip().lower()
     password = data.get('password') or ''
+
     if not email or not password:
         return jsonify({'error': 'Missing credentials'}), 400
+
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
     c.execute('SELECT id, name, password_hash FROM users WHERE email = ?', (email,))
     row = c.fetchone()
     conn.close()
+
     if not row or not check_password_hash(row[2], password):
         return jsonify({'error': 'Invalid email or password'}), 401
+
     user_id, name = row[0], row[1]
     token = create_token(user_id, email)
-    return jsonify({'token': token, 'user': {'id': user_id, 'email': email, 'name': name}})
+
+    return jsonify({
+        'token': token,
+        'user': {
+            'id': user_id,
+            'email': email,
+            'name': name
+        }
+    })
 
 
 @app.route('/api/auth/me', methods=['GET'])
 def me():
     auth = request.headers.get('Authorization', '')
     parts = auth.split()
+
     if len(parts) == 2 and parts[0].lower() == 'bearer':
         payload = verify_token(parts[1])
         if payload:
-            return jsonify({'user': {'id': payload['sub'], 'email': payload['email']}})
+            return jsonify({
+                'user': {
+                    'id': payload['sub'],
+                    'email': payload['email']
+                }
+            })
+
     return jsonify({'error': 'Unauthorized'}), 401
+
+
+@app.route('/api/generate-result', methods=['POST'])
+def generate_result():
+    user_answers = request.get_json(force=True, silent=True) or {}
+
+    if not user_answers:
+        return jsonify({'error': 'No quiz answers received'}), 400
+
+    result, status_code = result_engine.generate(user_answers)
+    return jsonify(result), status_code
+
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
-    # Serve built frontend files if present
     static_folder = app.static_folder
+
     if path != '' and os.path.exists(os.path.join(static_folder, path)):
         return send_from_directory(static_folder, path)
+
     index_path = os.path.join(static_folder, 'index.html')
+
     if os.path.exists(index_path):
         return send_from_directory(static_folder, 'index.html')
-    return jsonify({'message': 'Frontend not built. Run frontend in dev mode or build it.'}), 200
+
+    return jsonify({
+        'message': 'Frontend not built. Run frontend in dev mode or build it.'
+    }), 200
 
 
 if __name__ == '__main__':
