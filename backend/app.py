@@ -5,6 +5,7 @@ import sqlite3
 import jwt
 import datetime
 import os
+import json
 
 # Static folder points to frontend build directory (../frontend/dist)
 static_dir = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'dist')
@@ -13,6 +14,7 @@ app = Flask(__name__, static_folder=static_dir)
 CORS(app)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev_secret_key_change_me')
 db_path = os.path.join(os.path.dirname(__file__), 'auth.db')
+questions_dir = os.path.join(os.path.dirname(__file__), 'questions')
 
 
 def init_db():
@@ -49,6 +51,37 @@ def verify_token(token):
         return payload
     except Exception:
         return None
+
+
+def parse_language_file(path):
+    with open(path, 'r', encoding='utf-8') as file:
+        raw = file.read().strip()
+    if not raw:
+        raise ValueError('Language file is empty')
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f'Invalid JSON: {exc.msg}') from exc
+    if not isinstance(parsed, dict):
+        raise ValueError('Language file root must be an object')
+    return parsed
+
+
+def list_language_files():
+    if not os.path.isdir(questions_dir):
+        return []
+    languages = []
+    for filename in os.listdir(questions_dir):
+        file_path = os.path.join(questions_dir, filename)
+        if not os.path.isfile(file_path):
+            continue
+        language_name, extension = os.path.splitext(filename)
+        if extension.lower() != '.txt':
+            continue
+        if not language_name.strip():
+            continue
+        languages.append(language_name.strip())
+    return sorted(languages)
 
 
 @app.route('/api/hello')
@@ -111,6 +144,28 @@ def me():
         if payload:
             return jsonify({'user': {'id': payload['sub'], 'email': payload['email']}})
     return jsonify({'error': 'Unauthorized'}), 401
+
+
+@app.route('/api/questions/languages', methods=['GET'])
+def get_languages():
+    languages = list_language_files()
+    return jsonify({'languages': languages})
+
+
+@app.route('/api/questions/<language>', methods=['GET'])
+def get_language_questions(language):
+    sanitized_language = (language or '').strip()
+    if not sanitized_language:
+        return jsonify({'error': 'Language is required'}), 400
+    filename = f'{sanitized_language}.txt'
+    file_path = os.path.join(questions_dir, filename)
+    if not os.path.isfile(file_path):
+        return jsonify({'error': 'Language file not found'}), 404
+    try:
+        content = parse_language_file(file_path)
+    except ValueError as exc:
+        return jsonify({'error': f'Invalid language file: {str(exc)}'}), 400
+    return jsonify({'language': sanitized_language, 'content': content})
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
