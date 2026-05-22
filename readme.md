@@ -34,7 +34,25 @@ npm install
 npm run dev
 ```
 
-The Vite dev server will run (by default at http://localhost:5173). In dev mode, the frontend calls the backend at `/api/hello` (same origin relative path) — when developing you may need to configure a proxy or run the frontend with the backend on the same host/port mapping (or call the full backend URL).
+The Vite dev server will run (by default at http://localhost:5173). In dev mode, the frontend proxies `/api` to the Flask backend at http://127.0.0.1:5000.
+
+**Language selector:** On the title screen, the user picks a language from the dropdown. The app saves that choice in the browser (`localStorage`, key `asq_language`). The next time the project is opened or the page is refreshed, the same language is selected automatically and its quiz copy is loaded from the backend.
+
+### Internal result-screen preview (client / QA)
+
+The normal app URL does **not** show the personality result test panel. To preview all eight result layouts without completing the quiz, open this secret path (not linked from the UI):
+
+**Development (Vite):**
+
+http://localhost:5173/asq-internal-preview-8f3c2a9e1b7d4m6p2q0w5x
+
+**Production-like (Flask serving the built frontend):**
+
+http://127.0.0.1:5000/asq-internal-preview-8f3c2a9e1b7d4m6p2q0w5x
+
+Use the **Test results** buttons beside the phone frame to open each personality screen with sample content. The main quiz flow is unchanged at `/` (or http://localhost:5173/ in dev).
+
+The path is defined in `frontend/src/config/devPreviewRoute.ts` if it ever needs to be changed.
 
 ## How to run (production-like)
 
@@ -115,6 +133,8 @@ python backend/app.py
 ```
 
 6. Open the app and check the title screen language selector. The new language should appear automatically because the backend reads all `.txt` files from `backend/questions/`.
+
+**Remembering the last language:** When a user selects a language on the title screen, it is stored in the browser. On the next visit (after closing the tab, restarting the dev servers, or reloading the page), the dropdown opens on that language and the app loads its question content from `/api/questions/{language}`. If the saved language is no longer available (for example the file was removed), the app falls back to the first language in the list.
 
 If you add a completely new question or screen, update the frontend code as well. For translation-only changes, adding the new `.txt` file is enough.
 

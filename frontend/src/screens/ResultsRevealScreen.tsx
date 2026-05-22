@@ -6,6 +6,8 @@ type ResultsRevealScreenProps = {
   mainText?: string
   subtitleText?: string
   buttonText?: string
+  /** When false, continue stays disabled until the result API finishes */
+  ready?: boolean
 }
 
 export function ResultsRevealScreen({
@@ -13,6 +15,7 @@ export function ResultsRevealScreen({
   mainText = 'Gathering results...',
   subtitleText = 'I wonder where you will go?',
   buttonText = 'Click to find out!',
+  ready = true,
 }: ResultsRevealScreenProps) {
   const [showSubtitle, setShowSubtitle] = useState(false)
   const [showButton, setShowButton] = useState(false)
@@ -34,8 +37,13 @@ export function ResultsRevealScreen({
       </div>
       <div className="screen-footer results-footer">
         {showButton && (
-          <Button onClick={onContinue} fullWidth aria-label="Click to find out">
-            {buttonText}
+          <Button
+            onClick={onContinue}
+            disabled={!ready}
+            fullWidth
+            aria-label="Click to find out"
+          >
+            {ready ? buttonText : 'Still gathering...'}
           </Button>
         )}
       </div>

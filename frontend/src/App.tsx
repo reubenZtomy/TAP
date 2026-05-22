@@ -10,9 +10,15 @@ import { AdventureScreen } from './screens/AdventureScreen'
 import { RechargeScreen } from './screens/RechargeScreen'
 import { GraduationScreen } from './screens/GraduationScreen'
 import { ResultsRevealScreen } from './screens/ResultsRevealScreen'
+import { PersonalityResultScreen } from './screens/PersonalityResultScreen'
+import { PersonalityResultDevNav } from './components/PersonalityResultDevNav'
+import { isResultPreviewDevRoute } from './config/devPreviewRoute'
+import { createMockQuizResult, PersonalityId } from './data/personalityThemes'
 import { LoginScreen } from './screens/LoginScreen'
 import { RegisterScreen } from './screens/RegisterScreen'
 import { QuizContent } from './types/quizContent'
+import { buildGenerateResultPayload, QuizAnswerKeys } from './utils/quizAnswers'
+import { QuizResult } from './types/quizResult'
 
 type ScreenId =
   | 'login'
@@ -27,6 +33,7 @@ type ScreenId =
   | 'recharge'
   | 'graduation'
   | 'results'
+  | 'personalityResult'
   | 'done'
 
 export default function App() {
@@ -37,7 +44,47 @@ export default function App() {
   const [languages, setLanguages] = useState<string[]>([])
   const [selectedLanguage, setSelectedLanguage] = useState<string>('')
   const [quizContent, setQuizContent] = useState<QuizContent | null>(null)
+  const [quizAnswers, setQuizAnswers] = useState<QuizAnswerKeys>({})
+  const [quizResult, setQuizResult] = useState<QuizResult | null>(null)
+  const [quizResultLoaded, setQuizResultLoaded] = useState(false)
+  const [showResultPreviewDev, setShowResultPreviewDev] = useState(() => isResultPreviewDevRoute())
   const languageStorageKey = 'asq_language'
+
+  const setQuizAnswer = (key: keyof QuizAnswerKeys, value: string) => {
+    setQuizAnswers((prev) => {
+      const next = { ...prev, [key]: value }
+      console.log('[Quiz] Answer selected:', { question: key, optionKey: value })
+      return next
+    })
+  }
+
+  const submitQuizToApi = async (answers: QuizAnswerKeys): Promise<QuizResult | null> => {
+    const payload = buildGenerateResultPayload(answers, quizContent)
+    console.log('[Quiz] All answers (keys):', answers)
+    if (!payload) {
+      console.warn('[Quiz] Incomplete answers — skipping /api/generate-result', answers)
+      return null
+    }
+    console.log('[Quiz] POST /api/generate-result request:', payload)
+    try {
+      const res = await fetch('/api/generate-result', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const data = (await res.json()) as QuizResult
+      console.log('[Quiz] POST /api/generate-result status:', res.status)
+      console.log('[Quiz] POST /api/generate-result response:', data)
+      if (!res.ok) {
+        console.warn('[Quiz] API returned an error response')
+        return data
+      }
+      return data
+    } catch (err) {
+      console.error('[Quiz] POST /api/generate-result failed:', err)
+      return null
+    }
+  }
 
   // Enable overlay via ?overlay=1 in URL
   useEffect(() => {
@@ -49,6 +96,13 @@ export default function App() {
       setScreen('title')
     }
   }, [languageStorageKey])
+
+  useEffect(() => {
+    const syncDevPreviewRoute = () => setShowResultPreviewDev(isResultPreviewDevRoute())
+    syncDevPreviewRoute()
+    window.addEventListener('popstate', syncDevPreviewRoute)
+    return () => window.removeEventListener('popstate', syncDevPreviewRoute)
+  }, [])
 
   // Toggle overlay with 'o' for alignment
   useEffect(() => {
@@ -161,9 +215,17 @@ export default function App() {
   const getUiText = (key: keyof NonNullable<QuizContent['ui']>, fallback: string) =>
     quizContent?.ui?.[key] || fallback
 
+  const openTestPersonalityResult = (personalityId: PersonalityId) => {
+    setQuizResult(createMockQuizResult(personalityId))
+    setQuizResultLoaded(true)
+    setQuizAnswers({ passion: 'business' })
+    setScreen('personalityResult')
+  }
+
   return (
     <div className="app-root">
-      <DeviceFrame overlaySrc={overlaySrc} overlayOpacity={overlayOpacity}>
+      <div className="app-layout">
+        <DeviceFrame overlaySrc={overlaySrc} overlayOpacity={overlayOpacity}>
         {screen === 'login' && (
           <LoginScreen
             onLoggedIn={(t) => {
@@ -184,7 +246,13 @@ export default function App() {
         )}
         {screen === 'title' && (
           <TitleScreen
-            onStart={() => setScreen('passion')}
+            onStart={() => {
+              setQuizAnswers({})
+              setQuizResult(null)
+              setQuizResultLoaded(false)
+              console.log('[Quiz] Started — answers reset')
+              setScreen('passion')
+            }}
             titleText={quizContent?.title?.heading}
             subtitleText={quizContent?.title?.subtitle}
             startButtonText={quizContent?.title?.startButton}
@@ -196,7 +264,10 @@ export default function App() {
         {screen === 'passion' && (
           <PassionScreen
             onBack={() => setScreen('title')}
-            onNext={() => setScreen('partner')}
+            onNext={(choice) => {
+              if (choice) setQuizAnswer('passion', choice)
+              setScreen('partner')
+            }}
             questionText={getQuestionText('passion', 'Choose your path to your Aussie knowledge mastery!')}
             backText={getUiText('back', 'Back')}
             confirmText={getUiText('confirm', 'Confirm')}
@@ -209,7 +280,10 @@ export default function App() {
         {screen === 'partner' && (
           <PartnerScreen
             onBack={() => setScreen('passion')}
-            onFinish={() => setScreen('treasure')}
+            onFinish={(choice) => {
+              setQuizAnswer('partner', choice)
+              setScreen('treasure')
+            }}
             questionText={getQuestionText(
               'partner',
               'Who’s your wild partner on this epic journey through Australia?'
@@ -224,7 +298,10 @@ export default function App() {
         {screen === 'treasure' && (
           <TreasureScreen
             onBack={() => setScreen('partner')}
-            onConfirm={() => setScreen('fun')}
+            onConfirm={(choice) => {
+              setQuizAnswer('treasure', choice)
+              setScreen('fun')
+            }}
             questionText={getQuestionText('treasure', 'What’s your treasure chest looking for this Aussie quest?')}
             optionLabels={getOptionLabels('treasure')}
             backText={getUiText('back', 'Back')}
@@ -234,7 +311,10 @@ export default function App() {
         )}
         {screen === 'fun' && (
           <FunStudiesScreen
-            onNext={() => setScreen('basecamp')}
+            onNext={(choice) => {
+              setQuizAnswer('fun', choice)
+              setScreen('basecamp')
+            }}
             onBack={() => setScreen('title')}
             questionText={getQuestionText('fun', 'How will you judge fun and studies on your journey?')}
             optionLabels={getOptionLabels('fun')}
@@ -246,7 +326,10 @@ export default function App() {
         {screen === 'basecamp' && (
           <BasecampScreen
             onBack={() => setScreen('fun')}
-            onConfirm={() => setScreen('adventure')}
+            onConfirm={(choice) => {
+              setQuizAnswer('basecamp', choice)
+              setScreen('adventure')
+            }}
             questionText={getQuestionText('basecamp', 'Where will you set up your basecamp for learning?')}
             optionLabels={getOptionLabels('basecamp')}
             backText={getUiText('back', 'Back')}
@@ -257,7 +340,10 @@ export default function App() {
         {screen === 'adventure' && (
           <AdventureScreen
             onBack={() => setScreen('basecamp')}
-            onConfirm={() => setScreen('recharge')}
+            onConfirm={(choice) => {
+              if (choice) setQuizAnswer('adventure', choice)
+              setScreen('recharge')
+            }}
             questionText={getQuestionText('adventure', 'How will you level up during your Aussie quest downtime?')}
             backText={getUiText('back', 'Back')}
             confirmText={getUiText('confirm', 'Confirm')}
@@ -269,7 +355,10 @@ export default function App() {
         {screen === 'recharge' && (
           <RechargeScreen
             onBack={() => setScreen('adventure')}
-            onConfirm={() => setScreen('graduation')}
+            onConfirm={(choice) => {
+              setQuizAnswer('recharge', choice)
+              setScreen('graduation')
+            }}
             questionText={getQuestionText(
               'recharge',
               'Do you need a top-tier university to claim victory of the quest?'
@@ -283,7 +372,17 @@ export default function App() {
         {screen === 'graduation' && (
           <GraduationScreen
             onBack={() => setScreen('recharge')}
-            onConfirm={() => setScreen('results')}
+            onConfirm={async (choice) => {
+              const finalAnswers: QuizAnswerKeys = { ...quizAnswers, graduation: choice }
+              setQuizAnswers(finalAnswers)
+              console.log('[Quiz] Answer selected:', { question: 'graduation', optionKey: choice })
+              setQuizResult(null)
+              setQuizResultLoaded(false)
+              setScreen('results')
+              const data = await submitQuizToApi(finalAnswers)
+              setQuizResult(data)
+              setQuizResultLoaded(true)
+            }}
             questionText={getQuestionText('graduation', 'How will you level up after graduation?')}
             optionLabels={getOptionLabels('graduation')}
             backText={getUiText('back', 'Back')}
@@ -293,10 +392,34 @@ export default function App() {
         )}
         {screen === 'results' && (
           <ResultsRevealScreen
-            onContinue={() => setScreen('done')}
+            onContinue={() => setScreen('personalityResult')}
+            ready={quizResultLoaded}
             mainText={getUiText('resultsMain', 'Gathering results...')}
             subtitleText={getUiText('resultsSubtitle', 'I wonder where you will go?')}
             buttonText={getUiText('resultsButton', 'Click to find out!')}
+          />
+        )}
+        {screen === 'personalityResult' && (
+          <PersonalityResultScreen
+            result={quizResult}
+            quizAnswers={quizAnswers}
+            quizContent={quizContent}
+            onShare={() => {
+              const title = quizResult?.title ?? 'My quiz result'
+              const text = quizResult?.description ?? ''
+              if (navigator.share) {
+                void navigator.share({ title, text }).catch(() => undefined)
+              } else {
+                console.log('[Quiz] Share:', { title, text })
+              }
+            }}
+            onBack={() => setScreen('title')}
+            onRetry={() => {
+              setQuizAnswers({})
+              setQuizResult(null)
+              setQuizResultLoaded(false)
+              setScreen('passion')
+            }}
           />
         )}
         {screen === 'done' && (
@@ -307,7 +430,11 @@ export default function App() {
             </div>
           </div>
         )}
-      </DeviceFrame>
+        </DeviceFrame>
+        {showResultPreviewDev && (
+          <PersonalityResultDevNav onOpenResult={openTestPersonalityResult} />
+        )}
+      </div>
       {/* Dev controls hidden by default to avoid adding page height */}
       {overlay && (
         <div className="controls" aria-hidden="false">

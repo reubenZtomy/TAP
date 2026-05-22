@@ -3,7 +3,7 @@ import { Button } from '../components/Button'
 import { Title } from '../components/Typography'
 
 type FunStudiesScreenProps = {
-  onNext: () => void
+  onNext: (choice: string) => void
   onBack: () => void
   questionText?: string
   optionLabels?: Record<string, string>
@@ -61,7 +61,7 @@ export function FunStudiesScreen({
         </div>
       </div>
       <div className="screen-footer">
-        <Button onClick={() => selected && onNext()} disabled={!selected} fullWidth aria-label="Confirm">
+        <Button onClick={() => selected && onNext(selected)} disabled={!selected} fullWidth aria-label="Confirm">
           {confirmText}
         </Button>
         <div className="fun-instruction">{instructionText}</div>

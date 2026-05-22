@@ -10,6 +10,7 @@
     #bf4f26 90%,
     #373737 100%
   );
+  --personality-result-bg: linear-gradient(180deg, #f2d9bb 0%, #bf4f26 50%);
 }
 
 /* Adventure screen (swipe) */
@@ -724,6 +725,94 @@ body::before {
   gap: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+.app-layout {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  width: 100%;
+  max-width: 100%;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.personality-dev-nav {
+  flex: 0 0 auto;
+  width: 200px;
+  max-height: calc(100svh - 32px);
+  overflow-y: auto;
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(15, 30, 45, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+}
+
+.personality-dev-nav-title {
+  margin: 0 0 12px;
+  font-family: 'Dongle', system-ui, sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #f2d9bb;
+  text-align: center;
+}
+
+.personality-dev-nav-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.personality-dev-nav-button {
+  appearance: none;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: rgba(77, 104, 140, 0.5);
+  color: #ffffff;
+  font-family: 'Dongle', system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  cursor: pointer;
+}
+
+.personality-dev-nav-button:hover {
+  background: rgba(242, 162, 92, 0.85);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #152840;
+}
+
+@media (max-width: 720px) {
+  .app-layout {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .personality-dev-nav {
+    width: min(100%, 335px);
+    max-height: none;
+  }
+
+  .personality-dev-nav-buttons {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .personality-dev-nav-button {
+    width: auto;
+    flex: 1 1 calc(50% - 8px);
+    min-width: 140px;
+  }
 }
 
 .device-frame-outer {
@@ -1589,4 +1678,324 @@ h6 {
   .stack-card {
     flex-basis: calc(100% - 24px);
   }
+}
+
+/* Personality result (City Visionary layout; 8 theme variants) */
+.screen.personality-result-screen {
+  display: block;
+  /* Same side/top padding as .screen; no bottom padding */
+  padding: 20px 20px 0;
+  background: var(--personality-result-bg);
+  color: #4d688c;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.screen.personality-result-screen--error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  background: var(--personality-result-bg);
+}
+
+.personality-result-error {
+  font-family: 'Dongle', system-ui, sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #152840;
+  margin: 12px 0 24px;
+}
+
+.personality-result-scroll {
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0 0 24px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.personality-result-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.personality-result-intro {
+  width: 100%;
+  margin: 0 0 8px;
+  padding: 0;
+  text-align: center;
+  color: #4d688c;
+  font-family: 'Dongle', system-ui, sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32px;
+  box-sizing: border-box;
+}
+
+.personality-result-panel {
+  width: 100%;
+  background: #fff;
+  border-radius: 40px;
+  box-shadow: 0 8px 10px rgba(0, 0, 0, 0.25);
+  padding: 28px 18px 24px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  box-sizing: border-box;
+}
+
+.personality-result-hero {
+  width: 217px;
+  height: 217px;
+  object-fit: contain;
+  display: block;
+}
+
+.personality-result-traits {
+  width: 100%;
+  max-width: 299px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+}
+
+.personality-result-traits .personality-result-body-text {
+  flex: 0 0 auto;
+  text-align: center;
+}
+
+.personality-result-block {
+  width: 100%;
+  max-width: 299px;
+  border-radius: 14px;
+  box-shadow: 0 8px 10px rgba(21, 40, 64, 0.5);
+  padding: 12px 14px 14px;
+  margin: 0;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.personality-result-block--random {
+  background: var(--result-card-bg);
+  color: var(--result-card-fg);
+}
+
+.personality-result-block--random h2.personality-result-block-title,
+.personality-result-block--random p.personality-result-block-body {
+  color: var(--result-card-fg);
+}
+
+.personality-result-block--lucky-charm {
+  min-height: 160px;
+}
+
+.personality-result-block--white {
+  background: #fff;
+  color: #4d688c;
+  min-height: 140px;
+}
+
+.personality-result-block--subjects {
+  min-height: 200px;
+  padding-bottom: 18px;
+}
+
+/* Card headings: Bagel Fat One Regular 24px (overrides global h2 → Dongle) */
+h2.personality-result-block-title {
+  margin: 0 0 8px;
+  padding: 0;
+  font-family: 'Bagel Fat One', cursive;
+  font-size: 24px;
+  font-weight: 400;
+  font-style: normal;
+  line-height: 32px;
+  letter-spacing: 0;
+  text-align: center;
+}
+
+.personality-result-block--white h2.personality-result-block-title--blue {
+  color: #4d688c;
+}
+
+.personality-result-block--subjects h2.personality-result-block-title--orange {
+  color: #f2a25c;
+}
+
+/* Normal text: Dongle Bold 20px */
+.personality-result-body-text,
+p.personality-result-block-body,
+.personality-result-partner-label {
+  font-family: 'Dongle', system-ui, sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  font-style: normal;
+  line-height: 20px;
+}
+
+p.personality-result-block-body {
+  margin: 0;
+  color: #ffffff;
+  text-align: center;
+}
+
+.personality-result-block--white p.personality-result-block-body {
+  color: #4d688c;
+}
+
+.personality-result-charm-img {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  margin: 4px auto 8px;
+  padding: 0;
+  display: block;
+}
+
+.personality-result-partner-img {
+  width: 154px;
+  height: 154px;
+  object-fit: contain;
+  margin: 0 auto 4px;
+  padding: 0;
+  display: block;
+}
+
+.personality-result-partner-label {
+  margin: 0;
+  color: #4d688c;
+  text-align: center;
+}
+
+.personality-result-subjects {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 8px 0 0;
+  padding: 0;
+  flex-wrap: wrap;
+}
+
+.personality-result-subject-card {
+  width: 78px;
+  height: 138px;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+  background: transparent;
+  box-sizing: border-box;
+}
+
+.personality-result-subject-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Text in the lower band of the card art, below the icon — still inside the frame */
+.personality-result-subject-label {
+  position: absolute;
+  left: 9px;
+  right: 9px;
+  bottom: 20px;
+  z-index: 2;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  max-height: 32px;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Dongle', system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  font-style: normal;
+  line-height: 10px;
+  color: #4d688c;
+  text-align: center;
+  overflow-wrap: break-word;
+  word-break: normal;
+  background: transparent;
+  pointer-events: none;
+}
+
+.personality-result-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 18px 0 0;
+  padding: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+button.personality-result-action {
+  flex: 0 0 80px;
+  height: 80px;
+  background: #fff;
+  border: none;
+  border-radius: 14px;
+  box-shadow: 0 8px 10px rgba(21, 40, 64, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  color: #4d688c;
+  padding: 0;
+  font-family: 'Dongle', system-ui, sans-serif;
+  font-weight: 700;
+  font-style: normal;
+}
+
+/* Label spans inherit global span { font-weight: 300 } — override explicitly */
+button.personality-result-action .personality-result-action-label {
+  font-family: 'Dongle', system-ui, sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  font-style: normal;
+  line-height: 14px;
+  color: #4d688c;
+}
+
+button.personality-result-action .personality-result-action-icon {
+  width: auto;
+  height: 24px;
+  max-width: 44px;
+  object-fit: contain;
+  display: block;
+  flex-shrink: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+button.personality-result-action .personality-result-action-icon--share,
+button.personality-result-action .personality-result-action-icon--back {
+  height: 18px;
+  max-width: 32px;
+}
+
+button.personality-result-action:active {
+
+  transform: scale(0.98);
 }

@@ -4,7 +4,7 @@ import { Title } from '../components/Typography'
 
 type PartnerScreenProps = {
   onBack: () => void
-  onFinish: () => void
+  onFinish: (choice: string) => void
   questionText?: string
   optionLabels?: Record<string, string>
   backText?: string
@@ -66,7 +66,7 @@ export function PartnerScreen({
         <div className="partner-title">{current ? current.label : emptySelectionText}</div>
       </div>
       <div className="screen-footer partner-footer">
-        <Button onClick={onFinish} disabled={!selected} fullWidth aria-label="Confirm">
+        <Button onClick={() => selected && onFinish(selected)} disabled={!selected} fullWidth aria-label="Confirm">
           {confirmText}
         </Button>
         <div className="partner-instruction">{instructionText}</div>
