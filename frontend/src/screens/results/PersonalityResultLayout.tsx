@@ -1,7 +1,9 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { PersonalityTheme, RESULT_ACTION_ICONS } from '../../data/personalityThemes'
+import { UniversityRecommendation } from '../../types/quizResult'
 import { PersonalityResultViewData } from '../../utils/mapQuizResult'
 import { pickResultCardColors } from '../../utils/personalityResultCardColors'
+import { UniversityDetailModal } from './UniversityDetailModal'
 
 type PersonalityResultLayoutProps = {
   theme: PersonalityTheme
@@ -18,9 +20,23 @@ export function PersonalityResultLayout({
   onBack,
   onRetry,
 }: PersonalityResultLayoutProps) {
+  const [selectedUniversity, setSelectedUniversity] = useState<UniversityRecommendation | null>(
+    null
+  )
   const [traitLeft, traitCenter, traitRight] = theme.traits
   const [colorLeft, colorCenter, colorRight] = theme.traitColors
   const cardColors = useMemo(() => pickResultCardColors(), [theme.id])
+
+  const cityButtons = data.universities.filter((u) => u.city?.trim())
+
+  const cityButtonLabel = (uni: (typeof cityButtons)[0]) => {
+    const place = [uni.city, uni.state].filter(Boolean).join(', ')
+    const sameCityCount = cityButtons.filter((u) => u.city === uni.city).length
+    if (sameCityCount > 1 && uni.name?.trim()) {
+      return `${place} · ${uni.name}`
+    }
+    return place
+  }
 
   return (
     <div className="screen personality-result-screen">
@@ -122,8 +138,8 @@ export function PersonalityResultLayout({
               Potential Subjects
             </h2>
             <div className="personality-result-subjects">
-              {data.subjects.slice(0, 3).map((subject, index) => (
-                <div key={`${subject}-${index}`} className="personality-result-subject-card">
+              {data.subjects.slice(0, 3).map((subject) => (
+                <div key={subject} className="personality-result-subject-card">
                   <img
                     src={
                       theme.subjectCardImage ??
@@ -139,7 +155,37 @@ export function PersonalityResultLayout({
               ))}
             </div>
           </section>
+
+          {cityButtons.length > 0 && (
+            <section className="personality-result-block personality-result-block--white personality-result-block--cities">
+              <h2 className="personality-result-block-title personality-result-block-title--teal">
+                Recommended Cities
+              </h2>
+              <p className="personality-result-cities-hint">
+                Tap a city below to view university details, rankings, and fees.
+              </p>
+              <div className="personality-result-cities">
+                {cityButtons.map((uni, index) => (
+                    <button
+                      key={`${uni.name ?? 'uni'}-${uni.city}-${index}`}
+                      type="button"
+                      className="personality-result-city-btn"
+                      onClick={() => setSelectedUniversity(uni)}
+                    >
+                      {cityButtonLabel(uni)}
+                    </button>
+                  ))}
+              </div>
+            </section>
+          )}
         </div>
+
+        {selectedUniversity && (
+          <UniversityDetailModal
+            university={selectedUniversity}
+            onClose={() => setSelectedUniversity(null)}
+          />
+        )}
 
         <div className="personality-result-actions">
           <button type="button" className="personality-result-action" onClick={onShare} aria-label="Share">

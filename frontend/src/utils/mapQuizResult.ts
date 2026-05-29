@@ -1,5 +1,5 @@
 import { PersonalityTheme } from '../data/personalityThemes'
-import { QuizResult } from '../types/quizResult'
+import { QuizResult, UniversityRecommendation } from '../types/quizResult'
 
 export type PersonalityResultViewData = {
   title: string
@@ -9,6 +9,33 @@ export type PersonalityResultViewData = {
   partner: string
   luckyCharmText: string
   subjects: string[]
+  universities: UniversityRecommendation[]
+}
+
+function extractUniqueSubjects(
+  recs: UniversityRecommendation[],
+  passionLabel?: string
+): string[] {
+  const seen = new Set<string>()
+  const subjects: string[] = []
+
+  for (const rec of recs) {
+    const courses = (rec.top_courses || '').trim()
+    if (!courses) continue
+    for (const part of courses.split(',')) {
+      const subject = part.trim()
+      if (!subject) continue
+      const key = subject.toLowerCase()
+      if (seen.has(key)) continue
+      seen.add(key)
+      subjects.push(subject)
+      if (subjects.length >= 3) return subjects
+    }
+  }
+
+  if (subjects.length > 0) return subjects
+  if (passionLabel?.trim()) return [passionLabel.trim()]
+  return ['Business', 'Commerce', 'Analytics']
 }
 
 export function mapApiResultToView(
@@ -18,21 +45,7 @@ export function mapApiResultToView(
 ): PersonalityResultViewData {
   const recs = result.university_recommendations ?? []
   const topCity = recs[0]?.city?.trim()
-  const subjectFromRecs = recs
-    .slice(0, 3)
-    .map((r) => {
-      const courses = (r.top_courses || '').trim()
-      if (courses) return courses.split(',')[0]?.trim() || courses
-      return passionLabel || 'Subject'
-    })
-    .filter(Boolean)
-
-  const subjects =
-    subjectFromRecs.length > 0
-      ? subjectFromRecs
-      : passionLabel
-        ? [passionLabel, passionLabel, passionLabel]
-        : ['BUSINESS', 'BUSINESS', 'BUSINESS']
+  const subjects = extractUniqueSubjects(recs, passionLabel)
 
   return {
     title: result.title || 'City Visionary',
@@ -42,5 +55,6 @@ export function mapApiResultToView(
     partner: result.partner || 'Creative Learner',
     luckyCharmText: result.reason || theme.defaultLuckyCharm,
     subjects,
+    universities: recs.slice(0, 3),
   }
 }
