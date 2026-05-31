@@ -71,10 +71,10 @@
     "basecamp": {
       "question": "Where will you set up your basecamp for learning?",
       "options": [
-        { "key": "under_25k", "label": "Small Fortune - Under AUD 25k" },
-        { "key": "25_35k", "label": "Well Stocked - AUD 25k - 35k" },
-        { "key": "35_45k", "label": "Treasure Trove - AUD 35k - 45k" },
-        { "key": "over_45k", "label": "Endless Gold - Over AUD 45k" }
+        { "key": "big_creative", "label": "Big and Creative" },
+        { "key": "fast_paced", "label": "Fast-Paced and Exciting" },
+        { "key": "quiet_relaxed", "label": "Quiet and Relaxed" },
+        { "key": "city_nature", "label": "A mix of City and Nature" }
       ]
     },
     "recharge": {

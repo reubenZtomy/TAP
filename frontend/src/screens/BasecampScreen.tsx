@@ -13,10 +13,10 @@ type BasecampScreenProps = {
 }
 
 const options = [
-  { key: 'under_25k', label: 'Small Fortune - Under AUD 25k' },
-  { key: '25_35k', label: 'Well Stocked - AUD 25k - 35k' },
-  { key: '35_45k', label: 'Treasure Trove - AUD 35k - 45k' },
-  { key: 'over_45k', label: 'Endless Gold - Over AUD 45k' },
+  { key: 'big_creative', label: 'Big and Creative' },
+  { key: 'fast_paced', label: 'Fast-Paced and Exciting' },
+  { key: 'quiet_relaxed', label: 'Quiet and Relaxed' },
+  { key: 'city_nature', label: 'A mix of City and Nature' },
 ]
 
 export function BasecampScreen({
@@ -35,16 +35,16 @@ export function BasecampScreen({
   }))
   const heroSrc = useMemo(() => {
     switch (selected) {
-      case 'under_25k':
-        return '/asq/quiz6/IMG_1096.png'
-      case '25_35k':
-        return '/asq/quiz6/IMG_1097.png'
-      case '35_45k':
-        return '/asq/quiz6/IMG_1098.png'
-      case 'over_45k':
-        return '/asq/quiz6/IMG_1099.png'
+      case 'big_creative':
+        return '/asq/results - city/hero.png'
+      case 'fast_paced':
+        return '/asq/results - dynamic explorer/hero.png'
+      case 'quiet_relaxed':
+        return '/asq/results - focused scholar/hero.png'
+      case 'city_nature':
+        return '/asq/results - balanced adventurer/hero.png'
       default:
-        return '/asq/quiz6/IMG_1090.png'
+        return '/asq/Group 53.png'
     }
   }, [selected])
 

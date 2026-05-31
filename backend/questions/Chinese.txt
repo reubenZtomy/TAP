@@ -71,10 +71,10 @@
     "basecamp": {
       "question": "你想在哪裡建立你的學習基地？",
       "options": [
-        { "key": "under_25k", "label": "小小財寶 - AUD 25k 以下" },
-        { "key": "25_35k", "label": "準備充足 - AUD 25k - 35k" },
-        { "key": "35_45k", "label": "寶藏滿滿 - AUD 35k - 45k" },
-        { "key": "over_45k", "label": "黃金無限 - AUD 45k 以上" }
+        { "key": "big_creative", "label": "大型且富有創意" },
+        { "key": "fast_paced", "label": "快節奏且充滿活力" },
+        { "key": "quiet_relaxed", "label": "寧靜悠閒" },
+        { "key": "city_nature", "label": "城市與自然的結合" }
       ]
     },
     "recharge": {

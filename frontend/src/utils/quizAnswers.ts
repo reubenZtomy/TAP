@@ -58,10 +58,10 @@ const OPTION_FALLBACKS: Record<string, Record<string, string>> = {
     party: 'Party Expert',
   },
   basecamp: {
-    under_25k: 'Small Fortune',
-    '25_35k': 'Well-Stocked',
-    '35_45k': 'Treasure Trove',
-    over_45k: 'Endless Gold',
+    big_creative: 'Big and Creative City Life',
+    fast_paced: 'Fast-Paced and Exciting',
+    quiet_relaxed: 'Quiet and Relaxed',
+    city_nature: 'A Mix of City and Nature',
   },
   adventure: {
     surf: 'Surf the Waves',
